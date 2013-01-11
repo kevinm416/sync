@@ -9,21 +9,22 @@ import Sync.RSync
 import qualified Data.Map as M
 
 makeFileStructureFactory :: INotify -> [EventVariety] -> Chan FileEvent -> FileStructureFactory
-makeFileStructureFactory inotify watchedEvents eventChanHandle watchDir = do
-    let prod = fileEventCallback eventChanHandle watchDir
-    wd <- lift $ addWatch
-        inotify
-        watchedEvents
-        watchDir
-        prod
-    state <- get
-    let ret =  FileStructure {
-            getName = watchDir,
-            getChildren = [],
-            getWatchDescriptor = wd
-        }
-    put state { getMap = M.insert watchDir ret (getMap state) }
-    return ret
+makeFileStructureFactory inotify watchedEvents eventChanHandle =
+    \watchDir -> do
+        let prod = fileEventCallback eventChanHandle watchDir
+        wd <- lift $ addWatch
+            inotify
+            watchedEvents
+            watchDir
+            prod
+        state <- get
+        let ret =  FileStructure {
+                getName = watchDir,
+                getChildren = [],
+                getWatchDescriptor = wd
+            }
+        put state { getMap = M.insert watchDir ret (getMap state) }
+        return ret
 
 -- watchedEvents = [Close, Delete, Create, MoveIn, MoveOut]
 watchedEvents = [AllEvents]
